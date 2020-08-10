@@ -1,0 +1,13 @@
+name: rnae
+title: RNAE
+username:
+account: jjsligaesp
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 217320
+bundleId: 991902
+url: https://jjsligaesp.shinyapps.io/rnae/
+when: 1506045849.3251
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: Datos seleccionados.csv|PMA prueba.R

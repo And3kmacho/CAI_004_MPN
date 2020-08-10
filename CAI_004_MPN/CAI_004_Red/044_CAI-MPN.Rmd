@@ -1,0 +1,98 @@
+---
+title: "CAI_004"
+output: html_document
+---
+
+```{r}
+library("neuralnet")
+library("googlesheets")
+library("dplyr")
+library("ggplot2")
+library("plotly")
+library("nnet")
+library("stringr")
+library("magrittr")
+
+
+```
+
+
+
+```{r}
+"https://docs.google.com/spreadsheets/d/17RWvfRUdjblAPlssfX2jJPpB7vms1AlDyfCO8wPo2nU/edit?usp=sharing" -> link
+
+link %>% gs_url(lookup = FALSE, verbose = FALSE) %>% gs_read_listfeed(range = NULL) %>% 
+  setNames(c("timestamp", "estatura", "respuestas")) %>% 
+  na.omit -> base_004  
+
+quest <- c("1. ¿Con frecuencia siento frío en los pies en la cama?", "2. Cuando subo escaleras, ¿frecuentemente subo de dos en dos escalones?", "3. ¿Creo que jugaría bien en un equipo de baloncesto?", "4. Como oficial de policía, ¿yo impresionaría mucho?", "5. ¿Me siento incómodo en la mayoría de los carros?", "6. Literalmente, ¿yo miro a mis colegas de arriba hacia abajo?", "7. ¿Soy capaz de coger un objeto sobre un armario sin una escalera?", "8. ¿Tengo que agacharme al pasar por una puerta?", "9. ¿Soy capaz de colocar el equipaje en el maletero de un avión?", "10. Usualmente, ¿debo correr la silla del carro hacia atrás?", "11. Cuando subo al carro de otra persona, ¿me ofrecen la silla de adelante?", "12. Al tomar una fotografía, ¿me piden que me coloque atrás?", "13. Tengo dificultad para acomodarme en un bus?", "14. En una fila por orden de estatura, ¿siempre estoy atrás?", "15. Cuando tengo que escoger entre pasar por arriba o abajo, ¿escojo por arriba?", "16. Cuando estoy en una piscina, ¿yo toco el suelo con la planta de los pies?", "17. ¿Soy capaz de cambiar un bombillo sin subirme en algún objeto?", "18. Usualmente, ¿tengo que esquivar objetos colgantes?", "19.  Usualmente cuando estoy sentado, ¿mis pies quedan en el aire?")
+
+
+```
+
+```{r}
+lapply(quest, function(x){str_detect(base_004[["respuestas"]], x)}) %>% 
+  lapply(as.numeric) %>% 
+  as.data.frame %>% setNames(paste0("P", c(1:19))) %>% 
+  mutate(P20 = base_004[["estatura"]])-> data_004
+
+```
+
+
+```{r}
+
+## Bases
+
+fold.test <- sample(nrow(data_004), nrow(data_004) / 3)
+
+test  <- data_004[fold.test, -20] # Base prueba
+
+test_y <- data_004[fold.test, 20]
+
+train <- data_004[-fold.test, ] # Base entrenamiento
+
+
+```
+
+
+```{r}
+
+# Formula
+
+nms  <- names(train)
+
+frml <- as.formula(paste(colnames(train)[20],"~", paste(nms[!nms %in% colnames(train)[20] ], collapse = " + ")))
+
+lm(frml, data = train) %>% summary
+
+
+
+```
+
+
+```{r}
+
+#Modelo
+
+ann <- nnet(frml, train, size = 15, linout = TRUE, decay = 20)
+
+pr.nn <- predict(ann, test)
+
+plot(pr.nn, test_y)
+
+1 - var(pr.nn - test_y)/var(test_y)
+
+
+
+```
+
+
+
+```{r}
+ann %>% saveRDS("neural_netw.rds")
+
+
+```
+
+
+
